@@ -200,10 +200,6 @@ class EmailReplyGenerator {
     async handleAIButtonClick(selectedTone) {
         try {
             const settings = await this.getSettings();
-            if (!settings.apiKey) {
-                this.showNotification('Please configure your API key in the extension popup', 'error');
-                return;
-            }
             const emailData = this.extractEmailContent();
             if (!emailData.subject || !emailData.content) {
                 this.showNotification('Could not extract email content', 'error');
@@ -211,7 +207,7 @@ class EmailReplyGenerator {
             }
             // Use selectedTone from popover if provided, else fallback to settings.selectedTone
             const tone = selectedTone || settings.selectedTone || 'casual';
-            const reply = await this.generateAIReply(emailData, { ...settings, selectedTone: tone });
+            const reply = await this.generateAIReply(emailData, { selectedTone: tone });
             if (reply) {
                 this.insertReplyIntoEmail(reply);
                 this.showNotification('AI reply generated successfully!', 'success');
@@ -224,7 +220,9 @@ class EmailReplyGenerator {
 
     async getSettings() {
         return new Promise((resolve) => {
-            chrome.storage.sync.get(['apiKey', 'selectedTone'], resolve);
+            chrome.storage.sync.get(['selectedTone'], (result) => {
+                resolve({ selectedTone: result.selectedTone || 'casual' });
+            });
         });
     }
 
@@ -270,30 +268,19 @@ class EmailReplyGenerator {
     }
 
     async generateAIReply(emailData, settings) {
-        const prompt = this.buildPrompt(emailData, settings.selectedTone);
-        try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${settings.apiKey}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: [
-                        { role: 'system', content: 'You are a helpful email assistant that generates contextual email replies.' },
-                        { role: 'user', content: prompt }
-                    ],
-                    max_tokens: 500,
-                    temperature: 0.7
-                })
-            });
-            if (!response.ok) throw new Error(`API request failed: ${response.status}`);
-            const data = await response.json();
-            return data.choices[0].message.content.trim();
-        } catch (error) {
-            throw new Error(`Failed to generate reply: ${error.message}`);
-        }
+        // Call your backend proxy instead of OpenAI directly
+        const response = await fetch('http://localhost:3001/generate-reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt: emailData.content,
+                subject: emailData.subject,
+                tone: settings.selectedTone
+            })
+        });
+        const data = await response.json();
+        // Assume the backend returns { reply: '...' }
+        return data.reply;
     }
 
     buildPrompt(emailData, tone) {
@@ -435,7 +422,6 @@ class EmailReplyGenerator {
     async fetchAIRecommendations(emailData, tone, n, onEach) {
         // Use the same prompt, but ask for n completions
         const prompt = this.buildPrompt(emailData, tone);
-        const settings = await this.getSettings();
         const completions = new Array(n);
         // Use OpenAI API with n=3 completions (best_of is not supported, so call 3 times in parallel)
         await Promise.all(Array.from({ length: n }, (_, i) =>

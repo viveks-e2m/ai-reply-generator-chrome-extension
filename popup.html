@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Email Reply Generator</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Email Reply Generator</h1>
+            <p>Generate contextual email replies using AI</p>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h3>Select Tone</h3>
+                <div class="tone-options">
+                    <button class="tone-btn" data-tone="casual">
+                        <span class="tone-icon">😊</span>
+                        <span class="tone-text">Casual</span>
+                    </button>
+                    <button class="tone-btn" data-tone="formal">
+                        <span class="tone-icon">👔</span>
+                        <span class="tone-text">Formal</span>
+                    </button>
+                    <button class="tone-btn" data-tone="empowering">
+                        <span class="tone-icon">💪</span>
+                        <span class="tone-text">Empowering</span>
+                    </button>
+                    <button class="tone-btn" data-tone="not-interested">
+                        <span class="tone-icon">🚫</span>
+                        <span class="tone-text">Not Interested</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>API Configuration</h3>
+                <div class="api-config">
+                    <label for="apiKey">OpenAI API Key:</label>
+                    <input type="password" id="apiKey" placeholder="Enter your OpenAI API key">
+                    <button id="saveApiKey" class="btn btn-secondary">Save API Key</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Generate Reply</h3>
+                <div class="generate-section">
+                    <button id="generateReply" class="btn btn-primary" disabled>
+                        <span class="btn-icon">🤖</span>
+                        Generate Reply
+                    </button>
+                    <p class="note">Click the "AI Reply" button in your email client to generate a reply</p>
+                </div>
+            </div>
+
+            <div class="section" id="statusSection" style="display: none;">
+                <h3>Status</h3>
+                <div id="status" class="status-message"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by OpenAI GPT</p>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html> 

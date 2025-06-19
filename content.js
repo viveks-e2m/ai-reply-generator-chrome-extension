@@ -514,4 +514,55 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 });
 
 // Initialize the email reply generator
-const emailReplyGenerator = new EmailReplyGenerator(); 
+const emailReplyGenerator = new EmailReplyGenerator();
+
+// Utility: Find the Gmail Send button in the compose window
+function findGmailSendButton() {
+    // Gmail uses several classes, but 'T-I-atl' and 'aoO' are unique to the Send button
+    return document.querySelector('.btC .T-I.T-I-atl[role="button"][data-tooltip*="Send"]');
+}
+
+// Step 2: Inject the AI Update button next to Send
+function injectAIUpdateButton() {
+    const sendBtn = findGmailSendButton();
+    if (!sendBtn) return;
+
+    // Avoid injecting multiple times
+    if (sendBtn.parentNode.querySelector('.ai-update-btn')) return;
+
+    // Create the button
+    const aiBtn = document.createElement('button');
+    aiBtn.className = 'ai-update-btn';
+    aiBtn.textContent = 'AI Update';
+    aiBtn.style.marginLeft = '8px';
+    aiBtn.style.background = '#4b5563';
+    aiBtn.style.color = '#fff';
+    aiBtn.style.border = 'none';
+    aiBtn.style.borderRadius = '6px';
+    aiBtn.style.padding = '6px 14px';
+    aiBtn.style.fontSize = '13px';
+    aiBtn.style.cursor = 'pointer';
+    aiBtn.style.transition = 'background 0.18s';
+
+    aiBtn.addEventListener('mouseenter', () => aiBtn.style.background = '#1a202c');
+    aiBtn.addEventListener('mouseleave', () => aiBtn.style.background = '#4b5563');
+
+    // Insert after More send options button if present, else after Send button
+    let moreSendBtn = sendBtn.parentNode.querySelector('.T-I.hG.T-I-atl');
+    if (moreSendBtn) {
+        moreSendBtn.parentNode.insertBefore(aiBtn, moreSendBtn.nextSibling);
+    } else {
+        sendBtn.parentNode.insertBefore(aiBtn, sendBtn.nextSibling);
+    }
+
+    // Add click handler (to be implemented in Step 3)
+    aiBtn.onclick = () => {
+        alert('AI Update button clicked! (Popup logic will go here)');
+    };
+}
+
+// Observe DOM changes to inject the AI Update button when the compose window appears
+const observer = new MutationObserver(() => {
+    injectAIUpdateButton();
+});
+observer.observe(document.body, { childList: true, subtree: true }); 

@@ -274,7 +274,6 @@ class EmailReplyGenerator {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 prompt: emailData.content,
-                subject: emailData.subject,
                 tone: settings.selectedTone
             })
         });
@@ -285,10 +284,10 @@ class EmailReplyGenerator {
 
     buildPrompt(emailData, tone) {
         const toneInstructions = {
-            casual: 'Write a friendly, casual reply as if talking to a friend.',
-            formal: 'Write a professional, formal reply suitable for business communication.',
-            empowering: 'Write an encouraging and motivational reply that empowers the recipient.',
-            'not-interested': 'Write a polite but firm reply declining the offer or request.'
+            casual: 'Write a friendly, casual reply as if talking to a friend. Do NOT include a subject line in your reply. Only generate the body of the email.',
+            formal: 'Write a professional, formal reply suitable for business communication. Do NOT include a subject line in your reply. Only generate the body of the email.',
+            empowering: 'Write an encouraging and motivational reply that empowers the recipient. Do NOT include a subject line in your reply. Only generate the body of the email.',
+            "not-interested": 'Write a polite but firm reply declining the offer or request. Do NOT include a subject line in your reply. Only generate the body of the email.'
         };
         return `\nEmail Context:\nSubject: ${emailData.subject}\nFrom: ${emailData.sender}\nContent: ${emailData.content}\n\nThread History: ${emailData.thread.join('\n\n')}\n\nInstructions: ${toneInstructions[tone] || toneInstructions.casual}\n\nPlease generate ONLY the body of a contextual email reply (do NOT include a subject line):\n1. Address the main points in the email\n2. Maintain the specified tone\n3. Be concise but complete\n4. Sound natural and human-like\n5. Include appropriate greetings and closings\n\nReply body:`;
     }
@@ -428,7 +427,6 @@ class EmailReplyGenerator {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         prompt: emailData.content,
-                        subject: emailData.subject,
                         tone: tone
                     })
                 });

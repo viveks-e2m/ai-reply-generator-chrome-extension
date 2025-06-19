@@ -13,7 +13,7 @@ chrome.runtime.onInstalled.addListener(function(details) {
         
         // Open welcome page or show instructions
         chrome.tabs.create({
-            url: 'https://github.com/your-repo/ai-email-reply-generator#readme'
+            url: 'https://github.com/viveks-e2m/ai-reply-generator-chrome-extension/blob/main/README.md'
         });
     }
 });

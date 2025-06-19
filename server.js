@@ -10,8 +10,8 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Now loaded from .env
 
 app.post('/generate-reply', async (req, res) => {
   try {
-    const { prompt, subject, tone } = req.body;
-    const systemPrompt = `Reply in a ${tone} tone. Subject: ${subject}`;
+    const { prompt, tone } = req.body;
+    const systemPrompt = `Reply in a ${tone} tone. Do NOT include a subject line in your reply. Only generate the body of the email.`;
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {

@@ -145,6 +145,7 @@ class EmailReplyGenerator {
             { key: 'not-interested', label: '🚫 Not Interested' }
         ];
         let selectedTone = 'casual';
+        let customInstruction = '';
         tones.forEach(tone => {
             const btn = document.createElement('button');
             btn.className = 'ai-recommend-tonebtn';
@@ -155,7 +156,7 @@ class EmailReplyGenerator {
                 selectedTone = tone.key;
                 modal.querySelectorAll('.ai-recommend-tonebtn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                this.loadRecommendations(modal, selectedTone, emailData);
+                this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
             };
             toneBar.appendChild(btn);
         });
@@ -169,6 +170,58 @@ class EmailReplyGenerator {
             <div class="ai-recommend-item loading"></div>
         `;
         modal.appendChild(recArea);
+        // Custom instruction input (moved below recommendations)
+        const instructionLabel = document.createElement('label');
+        instructionLabel.textContent = 'Custom instruction or feedback (optional):';
+        instructionLabel.style.fontSize = '13px';
+        instructionLabel.style.fontWeight = '500';
+        instructionLabel.style.margin = '8px 0 4px 0';
+        instructionLabel.htmlFor = 'ai-custom-instruction';
+        const instructionInput = document.createElement('textarea');
+        instructionInput.id = 'ai-custom-instruction';
+        instructionInput.placeholder = 'Add extra instructions for the AI or give feedback...';
+        instructionInput.style.width = '100%';
+        instructionInput.style.minHeight = '38px';
+        instructionInput.style.resize = 'vertical';
+        instructionInput.style.marginBottom = '8px';
+        instructionInput.style.fontSize = '13px';
+        instructionInput.style.padding = '7px 10px';
+        instructionInput.style.border = '1.5px solid #e5e7eb';
+        instructionInput.style.borderRadius = '7px';
+        instructionInput.style.boxSizing = 'border-box';
+        instructionInput.style.fontFamily = 'inherit';
+        instructionInput.value = customInstruction;
+        instructionInput.addEventListener('input', (e) => {
+            customInstruction = e.target.value;
+        });
+        // Submit button for custom instruction
+        const submitBtn = document.createElement('button');
+        submitBtn.textContent = 'Submit Instruction';
+        submitBtn.className = 'ai-recommend-submit-btn';
+        submitBtn.style.marginBottom = '12px';
+        submitBtn.style.width = '100%';
+        submitBtn.style.padding = '10px 0';
+        submitBtn.style.fontSize = '14px';
+        submitBtn.style.fontWeight = '600';
+        submitBtn.style.background = '#2d3748';
+        submitBtn.style.color = '#fff';
+        submitBtn.style.border = 'none';
+        submitBtn.style.borderRadius = '7px';
+        submitBtn.style.cursor = 'pointer';
+        submitBtn.style.transition = 'background 0.18s, color 0.18s, box-shadow 0.18s';
+        submitBtn.addEventListener('mouseenter', () => {
+            submitBtn.style.background = '#1a202c';
+        });
+        submitBtn.addEventListener('mouseleave', () => {
+            submitBtn.style.background = '#2d3748';
+        });
+        submitBtn.onclick = () => {
+            this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
+        };
+        // Add label, textarea, and button after recommendations
+        modal.appendChild(instructionLabel);
+        modal.appendChild(instructionInput);
+        modal.appendChild(submitBtn);
         // Close button
         const closeBtn = document.createElement('button');
         closeBtn.className = 'ai-recommend-close';
@@ -179,7 +232,7 @@ class EmailReplyGenerator {
         document.body.appendChild(overlay);
         // Load recommendations
         const emailData = this.extractEmailContent();
-        this.loadRecommendations(modal, selectedTone, emailData);
+        this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
         // Remove on overlay click
         overlay.addEventListener('mousedown', (e) => {
             if (e.target === overlay) this.removeRecommendationModal();
@@ -374,7 +427,7 @@ class EmailReplyGenerator {
         };
     }
 
-    async loadRecommendations(modal, selectedTone, emailData) {
+    async loadRecommendations(modal, selectedTone, emailData, customInstruction = '') {
         const recArea = modal.querySelector('.ai-recommend-list');
         // Show loading state
         recArea.innerHTML = '';
@@ -388,7 +441,7 @@ class EmailReplyGenerator {
         }
         try {
             // Call the AI API for 2 completions in parallel
-            const completions = await this.fetchAIRecommendations(emailData, selectedTone, 2, (idx, reply) => {
+            const completions = await this.fetchAIRecommendations(emailData, selectedTone, 2, customInstruction, (idx, reply) => {
                 // Show each reply as it arrives
                 items[idx].className = 'ai-recommend-item';
                 items[idx].textContent = reply;
@@ -418,7 +471,7 @@ class EmailReplyGenerator {
         }
     }
 
-    async fetchAIRecommendations(emailData, tone, n, onEach) {
+    async fetchAIRecommendations(emailData, tone, n, customInstruction = '', onEach) {
         const completions = new Array(n);
         await Promise.all(Array.from({ length: n }, async (_, i) => {
             try {
@@ -427,7 +480,8 @@ class EmailReplyGenerator {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         prompt: emailData.content,
-                        tone: tone
+                        tone: tone,
+                        customInstruction: customInstruction
                     })
                 });
                 if (!response.ok) throw new Error('API error');

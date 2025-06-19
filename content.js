@@ -475,13 +475,20 @@ class EmailReplyGenerator {
         const completions = new Array(n);
         await Promise.all(Array.from({ length: n }, async (_, i) => {
             try {
+                let prompt = emailData.content;
+                if (emailData.thread && emailData.thread.length > 0) {
+                    prompt += '\n\nThread History:\n' + emailData.thread.join('\n---\n');
+                }
+                if (customInstruction && customInstruction.trim()) {
+                    prompt += '\n\nAdditional instruction: ' + customInstruction.trim();
+                }
                 const response = await fetch('http://localhost:3001/generate-reply', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt: emailData.content,
+                        prompt: prompt,
                         tone: tone,
-                        customInstruction: customInstruction
+                        customInstruction: '' // Already included in prompt
                     })
                 });
                 if (!response.ok) throw new Error('API error');

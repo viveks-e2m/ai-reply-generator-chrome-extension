@@ -212,11 +212,11 @@
     background: #ede9fe;
 }
 
-/* AI Recommendation Modal Styles */
+/* Formal & Professional AI Recommendation Modal Styles */
 .ai-recommend-modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(40, 40, 60, 0.18);
+    background: rgba(44, 62, 80, 0.10);
     z-index: 99999;
     display: flex;
     align-items: center;
@@ -225,79 +225,84 @@
 .ai-recommend-modal {
     background: #fff;
     border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(60, 60, 120, 0.18);
-    min-width: 260px;
-    max-width: 90vw;
-    padding: 16px 12px 10px 12px;
+    box-shadow: 0 8px 32px rgba(40, 60, 90, 0.13);
+    min-width: 240px;
+    max-width: 420px;
+    padding: 28px 22px 18px 22px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    animation: fadeIn 0.18s;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    border: 1.5px solid #e5e7eb;
 }
 .ai-recommend-close {
     position: absolute;
-    top: 6px;
-    right: 10px;
+    top: 10px;
+    right: 16px;
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 22px;
     color: #888;
     cursor: pointer;
     transition: color 0.15s;
     z-index: 2;
+    padding: 0 4px;
 }
 .ai-recommend-close:hover {
-    color: #c026d3;
+    color: #2d3748;
 }
 .ai-recommend-tonebar {
     display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 18px;
     justify-content: center;
 }
 .ai-recommend-tonebtn {
-    background: #f3e8ff;
-    color: #7c3aed;
-    border: 1.5px solid #e1e5e9;
-    border-radius: 7px;
-    padding: 5px 8px;
-    font-size: 12px;
+    background: #f4f6fa;
+    color: #2d3748;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.18s;
+    outline: none;
+    box-shadow: 0 1px 4px rgba(60, 60, 120, 0.04);
 }
 .ai-recommend-tonebtn.selected, .ai-recommend-tonebtn:hover {
-    background: #7c3aed;
-    color: #fff;
-    border-color: #7c3aed;
+    background: #e5e7eb;
+    color: #1a202c;
+    border-color: #4b5563;
 }
 .ai-recommend-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     margin-bottom: 2px;
 }
 .ai-recommend-item {
-    background: #f8fafc;
-    border: 1.5px solid #e1e5e9;
-    border-radius: 8px;
-    padding: 6px 8px;
-    font-size: 13px;
-    color: #333;
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #222;
     cursor: pointer;
     transition: background 0.15s, border 0.15s;
     outline: none;
-    min-height: 22px;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04);
+    min-height: 28px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.03);
     white-space: pre-line;
+    margin-bottom: 2px;
 }
 .ai-recommend-item:hover, .ai-recommend-item:focus {
-    background: #ede9fe;
-    border-color: #7c3aed;
+    background: #f1f5f9;
+    border-color: #4b5563;
 }
 .ai-recommend-item.loading {
-    background: repeating-linear-gradient(90deg, #f3e8ff 0 40px, #f8fafc 40px 80px);
+    background: repeating-linear-gradient(90deg, #f4f6fa 0 40px, #f9fafb 40px 80px);
     color: #bbb;
     border-style: dashed;
     animation: shimmer 1.2s linear infinite;
@@ -307,7 +312,7 @@
     100% { background-position: 80px 0; }
 }
 .ai-recommend-item.error {
-    background: #f8d7da;
-    color: #721c24;
+    background: #fbeaea;
+    color: #a94442;
     border: 1.5px solid #f5c6cb;
 } 

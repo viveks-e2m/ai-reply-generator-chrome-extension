@@ -183,24 +183,30 @@
     line-height: 32px;
     font-size: 14px;
     font-weight: 500;
-    color: #7c3aed;
+    color: #4b5563;
     background: none;
     border: none;
     border-radius: 16px;
     margin-right: 4px;
     margin-left: 0;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.4s cubic-bezier(0.4,0,0.2,1), color 0.18s;
     outline: none;
     vertical-align: middle;
     user-select: none;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
+    box-shadow: none;
+    background-size: 200% 100%;
+    background-position: left center;
 }
 .ai-reply-span:hover, .ai-reply-span:focus {
-    background: #f3e8ff;
-    color: #5b21b6;
-    text-decoration: underline;
+    background: linear-gradient(90deg, #e0e7ef 0%, #b6c6e3 50%, #e0e7ef 100%);
+    background-size: 200% 100%;
+    background-position: right center;
+    color: #1a202c;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(60, 60, 120, 0.06);
 }
 
 /* Optional: custom color for AI (bkAI) */
@@ -329,4 +335,13 @@
     background: #fbeaea;
     color: #a94442;
     border: 1.5px solid #f5c6cb;
+}
+
+.ai-reply-span.bkAI:hover, .ai-reply-span.bkAI:focus {
+    background: linear-gradient(90deg, #e0e7ef 0%, #b6c6e3 50%, #e0e7ef 100%);
+    background-size: 200% 100%;
+    background-position: right center;
+    color: #1a202c;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(60, 60, 120, 0.06);
 } 

@@ -96,7 +96,7 @@ class EmailReplyGenerator {
         span.className = 'ams bkAI ai-reply-span'; // ams for Gmail action, bkAI custom for AI
         span.setAttribute('role', 'link');
         span.setAttribute('tabindex', '0');
-        span.textContent = 'AI Reply';
+        span.innerHTML = 'AI Reply';
         span.title = 'Generate AI-powered reply';
         span.style.cursor = 'pointer';
         span.addEventListener('click', (e) => {
@@ -117,7 +117,7 @@ class EmailReplyGenerator {
     createAIButton() {
         const button = document.createElement('button');
         button.className = 'ai-reply-btn';
-        button.innerHTML = '🤖 AI Reply';
+        button.innerHTML = 'AI Reply';
         button.title = 'Generate AI-powered reply';
         button.addEventListener('click', (e) => {
             e.preventDefault();

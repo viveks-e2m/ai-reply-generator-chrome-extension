@@ -420,38 +420,27 @@ class EmailReplyGenerator {
     }
 
     async fetchAIRecommendations(emailData, tone, n, onEach) {
-        // Use the same prompt, but ask for n completions
-        const prompt = this.buildPrompt(emailData, tone);
         const completions = new Array(n);
-        // Use OpenAI API with n=3 completions (best_of is not supported, so call 3 times in parallel)
-        await Promise.all(Array.from({ length: n }, (_, i) =>
-            fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${settings.apiKey}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: [
-                        { role: 'system', content: 'You are a helpful email assistant that generates contextual email replies.' },
-                        { role: 'user', content: prompt }
-                    ],
-                    max_tokens: 500,
-                    temperature: 0.9
-                })
-            })
-            .then(async response => {
+        await Promise.all(Array.from({ length: n }, async (_, i) => {
+            try {
+                const response = await fetch('http://localhost:3001/generate-reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: emailData.content,
+                        subject: emailData.subject,
+                        tone: tone
+                    })
+                });
                 if (!response.ok) throw new Error('API error');
                 const data = await response.json();
-                completions[i] = data.choices[0].message.content.trim();
+                completions[i] = data.reply;
                 if (onEach) onEach(i, completions[i]);
-            })
-            .catch(() => {
+            } catch {
                 completions[i] = null;
                 if (onEach) onEach(i, 'Failed to load.');
-            })
-        ));
+            }
+        }));
         return completions;
     }
 }

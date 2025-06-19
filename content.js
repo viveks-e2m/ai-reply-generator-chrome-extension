@@ -41,7 +41,7 @@ class EmailReplyGenerator {
                 this.setupOutlook();
                 break;
             default:
-                // Do nothing
+            // Do nothing
         }
     }
 
@@ -504,7 +504,7 @@ class EmailReplyGenerator {
 }
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action === 'generateReply') {
         // Handle manual generation from popup
         const generator = new EmailReplyGenerator();

@@ -361,9 +361,9 @@ class EmailReplyGenerator {
         let textArea = document.querySelector('[role="textbox"], .Am.Al.editable');
         if (textArea) {
             textArea.focus();
-            textArea.textContent = reply;
-            const event = new Event('input', { bubbles: true });
-            textArea.dispatchEvent(event);
+            // Convert newlines to <br> for Gmail formatting
+            const htmlReply = reply.replace(/\n/g, '<br>');
+            document.execCommand('insertHTML', false, htmlReply);
             return;
         }
         // If not present, click the closest visible Reply button in the thread
@@ -375,9 +375,8 @@ class EmailReplyGenerator {
                 const box = document.querySelector('[role="textbox"], .Am.Al.editable');
                 if (box) {
                     box.focus();
-                    box.textContent = reply;
-                    const event = new Event('input', { bubbles: true });
-                    box.dispatchEvent(event);
+                    const htmlReply = reply.replace(/\n/g, '<br>');
+                    document.execCommand('insertHTML', false, htmlReply);
                 } else if (attempts < 10) {
                     setTimeout(() => tryInsert(attempts + 1), 100);
                 }

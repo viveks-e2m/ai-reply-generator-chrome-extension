@@ -18,12 +18,6 @@ chrome.runtime.onInstalled.addListener(function(details) {
     }
 });
 
-// Handle extension icon click
-chrome.action.onClicked.addListener(function(tab) {
-    // This will only trigger if no popup is defined in manifest
-    // Since we have a popup, this won't be called
-});
-
 // Listen for messages from content scripts and popup
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     switch (request.action) {

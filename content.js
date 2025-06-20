@@ -22,7 +22,7 @@ class EmailReplyGenerator {
 
     detectEmailClient() {
         const url = window.location.href;
-        if (url.includes('mail.google.com')) return 'gmail';
+        if (url.includes('mail.google.com')) return 'gmail';    
         if (url.includes('outlook.live.com') || url.includes('outlook.office.com')) return 'outlook';
         return 'unknown';
     }
@@ -309,10 +309,23 @@ class EmailReplyGenerator {
         if (senderElement) data.sender = senderElement.textContent.trim();
         const contentElement = document.querySelector('.a3s, .adn');
         if (contentElement) data.content = contentElement.textContent.trim();
-        const threadElements = document.querySelectorAll('.a3s, .adn');
-        threadElements.forEach((element, index) => {
-            if (index > 0) data.thread.push(element.textContent.trim());
+
+        // Structured thread history: sender + content for each previous message
+        data.thread = [];
+        const messageBlocks = document.querySelectorAll('.adn, .a3s');
+        messageBlocks.forEach((block, idx) => {
+            // Skip the first block (main content)
+            if (idx === 0) return;
+            const senderElem = block.querySelector('.gD, .zF');
+            const contentElem = block.querySelector('.im');
+            if (contentElem) {
+                data.thread.push({
+                    sender: senderElem ? senderElem.textContent.trim() : '',
+                    content: contentElem.textContent.trim()
+                });
+            }
         });
+
         return data;
     }
 
@@ -327,17 +340,17 @@ class EmailReplyGenerator {
     }
 
     async generateAIReply(emailData, settings) {
-        // Call your backend proxy instead of OpenAI directly
+        // Use buildPrompt to include the full context
+        const prompt = this.buildPrompt(emailData, settings.selectedTone);
         const response = await fetch('http://localhost:3001/generate-reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                prompt: emailData.content,
+                prompt: prompt,
                 tone: settings.selectedTone
             })
         });
         const data = await response.json();
-        // Assume the backend returns { reply: '...' }
         return data.reply;
     }
 
@@ -348,7 +361,11 @@ class EmailReplyGenerator {
             empowering: 'Write an encouraging and motivational reply that empowers the recipient. Do NOT include a subject line in your reply. Only generate the body of the email.',
             "not-interested": 'Write a polite but firm reply declining the offer or request. Do NOT include a subject line in your reply. Only generate the body of the email.'
         };
-        return `\nEmail Context:\nSubject: ${emailData.subject}\nFrom: ${emailData.sender}\nContent: ${emailData.content}\n\nThread History: ${emailData.thread.join('\n\n')}\n\nInstructions: ${toneInstructions[tone] || toneInstructions.casual}\n\nPlease generate ONLY the body of a contextual email reply (do NOT include a subject line):\n1. Address the main points in the email\n2. Maintain the specified tone\n3. Be concise but complete\n4. Sound natural and human-like\n5. Include appropriate greetings and closings\n\nReply body:`;
+        // Format thread as a readable conversation
+        const threadHistory = (emailData.thread || []).map(
+            msg => `From: ${msg.sender}\nContent: ${msg.content}`
+        ).join('\n---\n');
+        return `\nEmail Context:\nSubject: ${emailData.subject}\nFrom: ${emailData.sender}\nContent: ${emailData.content}\n\nThread History:\n${threadHistory}\n\nInstructions: ${toneInstructions[tone] || toneInstructions.casual}\n\nPlease generate ONLY the body of a contextual email reply (do NOT include a subject line):\n1. Address the main points in the email\n2. Maintain the specified tone\n3. Be concise but complete\n4. Sound natural and human-like\n5. Include appropriate greetings and closings\n\nReply body:`;
     }
 
     insertReplyIntoEmail(reply) {
@@ -477,10 +494,11 @@ class EmailReplyGenerator {
                     submitBtn.textContent = 'Updating...';
                     try {
                         const completions = await this.fetchAIRecommendations(
-                            { ...emailData, content: prefillItem.textContent },
+                            { ...emailData, content: emailData.content }, // pass original email as prompt
                             selectedTone,
                             1,
-                            instructionInput.value
+                            instructionInput.value,
+                            prefillItem.textContent // pass draft
                         );
                         if (completions && completions[0]) {
                             prefillItem.textContent = completions[0];
@@ -501,6 +519,30 @@ class EmailReplyGenerator {
             item.textContent = 'Loading...';
             recArea.appendChild(item);
             items.push(item);
+        }
+        // Add logic for custom instruction in normal mode
+        if (!isPrefillMode && submitBtn && instructionInput) {
+            submitBtn.onclick = async () => {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+                try {
+                    // Regenerate recommendations with the new custom instruction
+                    await this.loadRecommendations(
+                        modal,
+                        selectedTone,
+                        emailData,
+                        instructionInput.value, // pass the updated custom instruction
+                        '', // no prefill
+                        false,
+                        submitBtn,
+                        instructionInput
+                    );
+                } catch {
+                    // Optionally show an error
+                }
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Instruction';
+            };
         }
         try {
             // Call the AI API for multiple completions in a single call
@@ -529,7 +571,7 @@ class EmailReplyGenerator {
         }
     }
 
-    async fetchAIRecommendations(emailData, tone, n, customInstruction = '', onEach) {
+    async fetchAIRecommendations(emailData, tone, n, customInstruction = '', draft = '', onEach) {
         let prompt = emailData.content;
         if (emailData.thread && emailData.thread.length > 0) {
             prompt += '\n\nThread History:\n' + emailData.thread.join('\n---\n');
@@ -537,16 +579,20 @@ class EmailReplyGenerator {
         if (customInstruction && customInstruction.trim()) {
             prompt += '\n\nAdditional instruction: ' + customInstruction.trim();
         }
+        const body = {
+            prompt: prompt,
+            tone: tone,
+            n: n,
+            customInstruction: customInstruction,
+        };
+        if (draft) {
+            body.draft = draft;
+        }
         try {
             const response = await fetch('http://localhost:3001/generate-reply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    prompt: prompt,
-                    tone: tone,
-                    n: n,
-                    customInstruction: '' // Already included in prompt
-                })
+                body: JSON.stringify(body)
             });
             if (!response.ok) throw new Error('API error');
             const data = await response.json();
@@ -562,6 +608,7 @@ class EmailReplyGenerator {
             return ['Failed to load.'];
         }
     }
+
 }
 
 // Listen for messages from popup

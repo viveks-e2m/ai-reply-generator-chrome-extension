@@ -23,7 +23,9 @@ app.post("/generate-reply", async (req, res) => {
   try {
     // console.log("Received request body:", req.body);
     const { prompt, tone, customInstruction, n, draft } = req.body;
+  
     let systemPrompt = `Reply in a ${tone} tone. Do NOT include a subject line in your reply. Only generate the body of the email.`;
+
     if (customInstruction && customInstruction.trim()) {
       systemPrompt += ` Custom instruction: ${customInstruction.trim()}`;
     }
@@ -41,7 +43,7 @@ app.post("/generate-reply", async (req, res) => {
 
             Here is my current draft reply:
             ${draft}
-
+            
             Instruction: ${customInstruction || ""}
 
             Please improve the draft reply according to the instruction and tone.`,
@@ -55,12 +57,9 @@ app.post("/generate-reply", async (req, res) => {
           content: `Here is the email context:
           ${prompt}
 
-          // Here is my current draft reply:
-          // ${draft}
-
           Instruction: ${customInstruction || ""}
 
-          Please give me appropriate reply according to the email context and tone and custom instruction(if any).`,
+          Please give me appropriate reply according to the email context, tone and custom instruction(if any).`,
         },
       ];
       
@@ -83,6 +82,7 @@ app.post("/generate-reply", async (req, res) => {
       }
     );
     console.log("Successfully received response from OpenAI.");
+    console.log("#########response", response,"#########");
     res.json({
       replies: response.data.choices.map((choice) =>
         choice.message.content.trim()

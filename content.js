@@ -127,7 +127,7 @@ class EmailReplyGenerator {
         return button;
     }
 
-    showRecommendationModal(targetButton) {
+    showRecommendationModal(targetButton, prefill = '', prefillTone = '') {
         this.removeRecommendationModal();
         // Modal overlay
         const overlay = document.createElement('div');
@@ -144,19 +144,33 @@ class EmailReplyGenerator {
             { key: 'empowering', label: '💪 Empowering' },
             { key: 'not-interested', label: '🚫 Not Interested' }
         ];
-        let selectedTone = 'casual';
+        let selectedTone = prefillTone || 'casual';
         let customInstruction = '';
+        let prefillMode = !!prefill;
+        let currentPrefill = prefill;
         tones.forEach(tone => {
             const btn = document.createElement('button');
             btn.className = 'ai-recommend-tonebtn';
             btn.textContent = tone.label;
             btn.dataset.tone = tone.key;
             if (tone.key === selectedTone) btn.classList.add('selected');
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 selectedTone = tone.key;
                 modal.querySelectorAll('.ai-recommend-tonebtn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
+                if (prefillMode) {
+                    // Fetch the version for the selected tone and update the prefill
+                    const emailData = this.extractEmailContent();
+                    const completions = await this.fetchAIRecommendations(emailData, selectedTone, 1, customInstruction);
+                    if (completions && completions[0]) {
+                        currentPrefill = completions[0];
+                    } else {
+                        currentPrefill = 'Failed to load version for this tone.';
+                    }
+                    this.loadRecommendations(modal, selectedTone, emailData, customInstruction, currentPrefill, true, submitBtn, instructionInput);
+                } else {
+                    this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
+                }
             };
             toneBar.appendChild(btn);
         });
@@ -164,11 +178,6 @@ class EmailReplyGenerator {
         // Recommendations area
         const recArea = document.createElement('div');
         recArea.className = 'ai-recommend-list';
-        recArea.innerHTML = `
-            <div class="ai-recommend-item loading"></div>
-            <div class="ai-recommend-item loading"></div>
-            <div class="ai-recommend-item loading"></div>
-        `;
         modal.appendChild(recArea);
         // Custom instruction input (moved below recommendations)
         const instructionLabel = document.createElement('label');
@@ -215,9 +224,6 @@ class EmailReplyGenerator {
         submitBtn.addEventListener('mouseleave', () => {
             submitBtn.style.background = '#2d3748';
         });
-        submitBtn.onclick = () => {
-            this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
-        };
         // Add label, textarea, and button after recommendations
         modal.appendChild(instructionLabel);
         modal.appendChild(instructionInput);
@@ -232,7 +238,7 @@ class EmailReplyGenerator {
         document.body.appendChild(overlay);
         // Load recommendations
         const emailData = this.extractEmailContent();
-        this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
+        this.loadRecommendations(modal, selectedTone, emailData, customInstruction, prefill, prefillMode, submitBtn, instructionInput);
         // Remove on overlay click
         overlay.addEventListener('mousedown', (e) => {
             if (e.target === overlay) this.removeRecommendationModal();
@@ -348,20 +354,26 @@ class EmailReplyGenerator {
     insertReplyIntoEmail(reply) {
         switch (this.currentEmailClient) {
             case 'gmail':
-                this.insertGmailReply(reply);
+                this.replaceGmailReply(reply);
                 break;
             case 'outlook':
-                this.insertOutlookReply(reply);
+                this.replaceOutlookReply(reply);
                 break;
         }
     }
 
-    insertGmailReply(reply) {
-        // Try to find the reply box
+    // New: Replace the entire content in Gmail compose box
+    replaceGmailReply(reply) {
         let textArea = document.querySelector('[role="textbox"], .Am.Al.editable');
         if (textArea) {
             textArea.focus();
-            // Convert newlines to <br> for Gmail formatting
+            // Remove all content
+            if (textArea.innerHTML !== undefined) {
+                textArea.innerHTML = '';
+            } else {
+                textArea.textContent = '';
+            }
+            // Insert new reply (convert newlines to <br> for Gmail formatting)
             const htmlReply = reply.replace(/\n/g, '<br>');
             document.execCommand('insertHTML', false, htmlReply);
             return;
@@ -375,6 +387,11 @@ class EmailReplyGenerator {
                 const box = document.querySelector('[role="textbox"], .Am.Al.editable');
                 if (box) {
                     box.focus();
+                    if (box.innerHTML !== undefined) {
+                        box.innerHTML = '';
+                    } else {
+                        box.textContent = '';
+                    }
                     const htmlReply = reply.replace(/\n/g, '<br>');
                     document.execCommand('insertHTML', false, htmlReply);
                 } else if (attempts < 10) {
@@ -385,10 +402,12 @@ class EmailReplyGenerator {
         }
     }
 
-    insertOutlookReply(reply) {
+    // New: Replace the entire content in Outlook compose box
+    replaceOutlookReply(reply) {
         const textArea = document.querySelector('[role="textbox"], .ms-rtestate-field');
         if (textArea) {
             textArea.focus();
+            textArea.textContent = '';
             textArea.textContent = reply;
             const event = new Event('input', { bubbles: true });
             textArea.dispatchEvent(event);
@@ -426,12 +445,56 @@ class EmailReplyGenerator {
         };
     }
 
-    async loadRecommendations(modal, selectedTone, emailData, customInstruction = '') {
+    async loadRecommendations(modal, selectedTone, emailData, customInstruction = '', prefill = '', isPrefillMode = false, submitBtn = null, instructionInput = null) {
         const recArea = modal.querySelector('.ai-recommend-list');
-        // Show loading state
         recArea.innerHTML = '';
-        const numVersions = 2; // or any number you want to show
         const items = [];
+        if (prefill) {
+            // Prefilled item is a non-editable div
+            const prefillItem = document.createElement('div');
+            prefillItem.className = 'ai-recommend-item';
+            prefillItem.textContent = prefill;
+            prefillItem.title = 'This is your current draft reply.';
+            prefillItem.tabIndex = 0;
+            prefillItem.style.cursor = 'pointer';
+            prefillItem.onclick = () => {
+                this.insertReplyIntoEmail(prefillItem.textContent);
+                this.removeRecommendationModal();
+            };
+            prefillItem.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.insertReplyIntoEmail(prefillItem.textContent);
+                    this.removeRecommendationModal();
+                }
+            };
+            recArea.appendChild(prefillItem);
+            items.push(prefillItem);
+            // Allow custom instruction to update the prefilled response
+            if (submitBtn && instructionInput) {
+                submitBtn.onclick = async () => {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Updating...';
+                    try {
+                        const completions = await this.fetchAIRecommendations(
+                            { ...emailData, content: prefillItem.textContent },
+                            selectedTone,
+                            1,
+                            instructionInput.value
+                        );
+                        if (completions && completions[0]) {
+                            prefillItem.textContent = completions[0];
+                        }
+                    } catch {
+                        prefillItem.textContent = 'Failed to update with custom instruction.';
+                    }
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Instruction';
+                };
+            }
+            return;
+        }
+        const numVersions = 2; // or any number you want to show
         for (let i = 0; i < numVersions; ++i) {
             const item = document.createElement('div');
             item.className = 'ai-recommend-item loading';
@@ -528,6 +591,18 @@ function injectAIUpdateButton() {
     // Avoid injecting multiple times
     if (sendBtn.parentNode.querySelector('.ai-update-btn')) return;
 
+    // Only inject for reply/forward, not new compose
+    // Check if the compose box is inside a thread (has .adn or .a3s ancestor)
+    let isReplyOrForward = false;
+    let composeBox = sendBtn.closest('.nH'); // Gmail's compose container
+    if (composeBox) {
+        // Look for thread context above compose
+        if (composeBox.querySelector('.adn, .a3s')) {
+            isReplyOrForward = true;
+        }
+    }
+    if (!isReplyOrForward) return;
+
     // Create the button
     const aiBtn = document.createElement('button');
     aiBtn.className = 'ai-update-btn';
@@ -553,9 +628,16 @@ function injectAIUpdateButton() {
         sendBtn.parentNode.insertBefore(aiBtn, sendBtn.nextSibling);
     }
 
-    // Add click handler (to be implemented in Step 3)
+    // Add click handler to open the modal with prefilled response and tone
     aiBtn.onclick = () => {
-        alert('AI Update button clicked! (Popup logic will go here)');
+        let prefill = '';
+        let prefillTone = 'casual';
+        const box = document.querySelector('[role="textbox"], .Am.Al.editable');
+        if (box) {
+            prefill = box.innerText || box.textContent || '';
+            // Optionally, try to detect the tone from a data attribute or context if available
+        }
+        emailReplyGenerator.showRecommendationModal(aiBtn, prefill, prefillTone);
     };
 }
 

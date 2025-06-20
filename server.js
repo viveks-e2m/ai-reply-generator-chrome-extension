@@ -19,15 +19,17 @@ if (!OPENAI_API_KEY) {
 app.post('/generate-reply', async (req, res) => {
   console.log("Received a request to /generate-reply");
   try {
-    const { prompt, tone, customInstruction } = req.body;
+    const { prompt, tone, customInstruction, n } = req.body;
     let systemPrompt = `Reply in a ${tone} tone. Do NOT include a subject line in your reply. Only generate the body of the email.`;
     if (customInstruction && customInstruction.trim()) {
       systemPrompt += ` Custom instruction: ${customInstruction.trim()}`;
     }
+    const completionsCount = n && Number.isInteger(n) && n > 0 ? n : 2;
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: 'gpt-3.5-turbo',
+        n: completionsCount,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -41,7 +43,7 @@ app.post('/generate-reply', async (req, res) => {
       }
     );
     console.log("Successfully received response from OpenAI.");
-    res.json({ reply: response.data.choices[0].message.content.trim() });
+    res.json({ replies: response.data.choices.map(choice => choice.message.content.trim()) });
   } catch (err) {
     console.error("Error calling OpenAI API:", err.response ? err.response.data : err.message);
     res.status(500).json({ error: 'Failed to call OpenAI API' });

@@ -430,8 +430,9 @@ class EmailReplyGenerator {
         const recArea = modal.querySelector('.ai-recommend-list');
         // Show loading state
         recArea.innerHTML = '';
+        const numVersions = 2; // or any number you want to show
         const items = [];
-        for (let i = 0; i < 2; ++i) {
+        for (let i = 0; i < numVersions; ++i) {
             const item = document.createElement('div');
             item.className = 'ai-recommend-item loading';
             item.textContent = 'Loading...';
@@ -439,67 +440,64 @@ class EmailReplyGenerator {
             items.push(item);
         }
         try {
-            // Call the AI API for 2 completions in parallel
-            const completions = await this.fetchAIRecommendations(emailData, selectedTone, 2, customInstruction, (idx, reply) => {
-                // Show each reply as it arrives
-                items[idx].className = 'ai-recommend-item';
-                items[idx].textContent = reply;
-                items[idx].title = 'Click to use this reply';
-                items[idx].tabIndex = 0;
-                items[idx].onclick = () => {
-                    this.insertReplyIntoEmail(reply);
-                    this.removeRecommendationModal();
-                };
-                items[idx].onkeydown = (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        this.insertReplyIntoEmail(reply);
-                        this.removeRecommendationModal();
-                    }
-                };
-            });
-            // If any are still loading (e.g. error), fill them in
+            // Call the AI API for multiple completions in a single call
+            const completions = await this.fetchAIRecommendations(emailData, selectedTone, numVersions, customInstruction);
             completions.forEach((reply, idx) => {
-                if (reply && items[idx].classList.contains('loading')) {
+                if (items[idx]) {
                     items[idx].className = 'ai-recommend-item';
                     items[idx].textContent = reply;
+                    items[idx].title = 'Click to use this reply';
+                    items[idx].tabIndex = 0;
+                    items[idx].onclick = () => {
+                        this.insertReplyIntoEmail(reply);
+                        this.removeRecommendationModal();
+                    };
+                    items[idx].onkeydown = (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.insertReplyIntoEmail(reply);
+                            this.removeRecommendationModal();
+                        }
+                    };
                 }
             });
         } catch (err) {
-            recArea.innerHTML = `<div class="ai-recommend-item error">Failed to load recommendations. Please try again.</div>`;
+            recArea.innerHTML = `<div class=\"ai-recommend-item error\">Failed to load recommendations. Please try again.</div>`;
         }
     }
 
     async fetchAIRecommendations(emailData, tone, n, customInstruction = '', onEach) {
-        const completions = new Array(n);
-        await Promise.all(Array.from({ length: n }, async (_, i) => {
-            try {
-                let prompt = emailData.content;
-                if (emailData.thread && emailData.thread.length > 0) {
-                    prompt += '\n\nThread History:\n' + emailData.thread.join('\n---\n');
-                }
-                if (customInstruction && customInstruction.trim()) {
-                    prompt += '\n\nAdditional instruction: ' + customInstruction.trim();
-                }
-                const response = await fetch('http://localhost:3001/generate-reply', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        tone: tone,
-                        customInstruction: '' // Already included in prompt
-                    })
-                });
-                if (!response.ok) throw new Error('API error');
-                const data = await response.json();
-                completions[i] = data.reply;
-                if (onEach) onEach(i, completions[i]);
-            } catch {
-                completions[i] = null;
-                if (onEach) onEach(i, 'Failed to load.');
+        let prompt = emailData.content;
+        if (emailData.thread && emailData.thread.length > 0) {
+            prompt += '\n\nThread History:\n' + emailData.thread.join('\n---\n');
+        }
+        if (customInstruction && customInstruction.trim()) {
+            prompt += '\n\nAdditional instruction: ' + customInstruction.trim();
+        }
+        try {
+            const response = await fetch('http://localhost:3001/generate-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    tone: tone,
+                    n: n,
+                    customInstruction: '' // Already included in prompt
+                })
+            });
+            if (!response.ok) throw new Error('API error');
+            const data = await response.json();
+            if (Array.isArray(data.replies)) {
+                if (onEach) data.replies.forEach((reply, idx) => onEach(idx, reply));
+                return data.replies;
+            } else {
+                if (onEach) onEach(0, 'Failed to load.');
+                return ['Failed to load.'];
             }
-        }));
-        return completions;
+        } catch {
+            if (onEach) onEach(0, 'Failed to load.');
+            return ['Failed to load.'];
+        }
     }
 }
 

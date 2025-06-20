@@ -8,7 +8,16 @@ app.use(express.json());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Now loaded from .env
 
+// Check for API key and log status
+if (!OPENAI_API_KEY) {
+    console.error("FATAL ERROR: OPENAI_API_KEY is not set. Please create a .env file and add your key.");
+    process.exit(1); // Stop the server if the key isn't found
+} else {
+    console.log("OpenAI API Key loaded successfully.");
+}
+
 app.post('/generate-reply', async (req, res) => {
+  console.log("Received a request to /generate-reply");
   try {
     const { prompt, tone, customInstruction } = req.body;
     let systemPrompt = `Reply in a ${tone} tone. Do NOT include a subject line in your reply. Only generate the body of the email.`;
@@ -31,9 +40,11 @@ app.post('/generate-reply', async (req, res) => {
         }
       }
     );
+    console.log("Successfully received response from OpenAI.");
     res.json({ reply: response.data.choices[0].message.content.trim() });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error calling OpenAI API:", err.response ? err.response.data : err.message);
+    res.status(500).json({ error: 'Failed to call OpenAI API' });
   }
 });
 

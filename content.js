@@ -548,6 +548,25 @@ class EmailReplyGenerator {
                     const newVersionItem = document.createElement('div');
                     newVersionItem.className = 'ai-recommend-item current-version';
                     
+                    // Create instruction container if there's a custom instruction
+                    if (customInstruction) {
+                        const instructionDiv = document.createElement('div');
+                        instructionDiv.className = 'instruction-container';
+                        
+                        const instructionLabel = document.createElement('div');
+                        instructionLabel.className = 'instruction-label';
+                        instructionLabel.textContent = 'Custom Instruction:';
+                        
+                        const instructionText = document.createElement('div');
+                        instructionText.className = 'instruction-text';
+                        instructionText.textContent = customInstruction;
+                        
+                        instructionDiv.appendChild(instructionLabel);
+                        instructionDiv.appendChild(instructionText);
+                        newVersionItem.appendChild(instructionDiv);
+                    }
+                    
+                    // Create content container
                     const newContentDiv = document.createElement('div');
                     newContentDiv.className = 'content';
                     newContentDiv.textContent = newVersion;

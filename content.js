@@ -168,19 +168,31 @@ class EmailReplyGenerator {
                 selectedTone = tone.key;
                 modal.querySelectorAll('.ai-recommend-tonebtn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                if (prefillMode) {
-                    // Fetch the version for the selected tone and update the prefill
-                    const emailData = this.extractEmailContent();
-                    const completions = await this.fetchAIRecommendations(emailData, selectedTone, 1, customInstruction);
-                    if (completions && completions[0]) {
-                        currentPrefill = completions[0];
-                    } else {
-                        currentPrefill = 'Failed to load version for this tone.';
-                    }
-                    this.loadRecommendations(modal, selectedTone, emailData, customInstruction, currentPrefill, true, submitBtn, instructionInput);
-                } else {
-                    this.loadRecommendations(modal, selectedTone, emailData, customInstruction);
+
+                // Clear custom instruction when tone changes
+                if (instructionInput) {
+                    instructionInput.value = '';
+                    customInstruction = '';
                 }
+
+                // Reset the recommendations area
+                const recArea = modal.querySelector('.ai-recommend-list');
+                if (recArea) {
+                    recArea.innerHTML = '';
+                }
+
+                // Load fresh recommendation with new tone
+                const emailData = this.extractEmailContent();
+                this.loadRecommendations(
+                    modal,
+                    selectedTone,
+                    emailData,
+                    '', // Reset custom instruction
+                    '', // No prefill
+                    false,
+                    submitBtn,
+                    instructionInput
+                );
             };
             toneBar.appendChild(btn);
         });
@@ -206,37 +218,58 @@ class EmailReplyGenerator {
         const submitBtn = document.createElement('button');
         submitBtn.textContent = 'Submit Instruction';
         submitBtn.className = 'ai-recommend-submit-btn';
+
+        // Add submit button click handler
+        submitBtn.onclick = async () => {
+            if (!instructionInput.value.trim()) return;
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Generating...';
+            
+            try {
+                const emailData = this.extractEmailContent();
+                await this.loadRecommendations(
+                    modal,
+                    selectedTone,
+                    emailData,
+                    instructionInput.value,
+                    '', // no prefill
+                    false,
+                    submitBtn,
+                    instructionInput
+                );
+            } catch (error) {
+                console.error('Error generating new version:', error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Instruction';
+            }
+        };
+
         // Add label, textarea, and button after recommendations
         modal.appendChild(instructionLabel);
         modal.appendChild(instructionInput);
         modal.appendChild(submitBtn);
-        // Show History button (move here, after submitBtn)
-        const historyBtn = document.createElement('button');
-        historyBtn.className = 'ai-recommend-history-btn';
-        historyBtn.textContent = 'Show History';
-        historyBtn.type = 'button';
-        historyBtn.title = 'Show your previous AI replies';
-        historyBtn.onclick = async (e) => {
-            e.preventDefault();
-            const history = await this.getHistoryItems();
-            this.showHistoryModal(history);
-        };
-        modal.appendChild(historyBtn);
+        
         // Close button
         const closeBtn = document.createElement('button');
         closeBtn.className = 'ai-recommend-close';
         closeBtn.innerHTML = '&times;';
         closeBtn.onclick = () => this.removeRecommendationModal();
         modal.appendChild(closeBtn);
+        
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
+        
         // Load recommendations
         const emailData = this.extractEmailContent();
         this.loadRecommendations(modal, selectedTone, emailData, customInstruction, prefill, prefillMode, submitBtn, instructionInput);
+        
         // Remove on overlay click
         overlay.addEventListener('mousedown', (e) => {
             if (e.target === overlay) this.removeRecommendationModal();
         });
+        
         // Remove on Escape
         document.addEventListener('keydown', this._recommendModalEscapeHandler = (evt) => {
             if (evt.key === 'Escape') this.removeRecommendationModal();
@@ -408,122 +441,148 @@ class EmailReplyGenerator {
 
     async loadRecommendations(modal, selectedTone, emailData, customInstruction = '', prefill = '', isPrefillMode = false, submitBtn = null, instructionInput = null) {
         const recArea = modal.querySelector('.ai-recommend-list');
-        recArea.innerHTML = '';
-        const items = [];
-        if (prefill) {
-            // Prefilled item is a non-editable div
-            const prefillItem = document.createElement('div');
-            prefillItem.className = 'ai-recommend-item';
-            prefillItem.textContent = prefill;
-            prefillItem.title = 'This is your current draft reply.';
-            prefillItem.tabIndex = 0;
-            prefillItem.style.cursor = 'pointer';
-            prefillItem.onclick = () => {
-                this.insertReplyIntoEmail(prefillItem.textContent);
-                this.removeRecommendationModal();
-            };
-            prefillItem.onkeydown = (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.insertReplyIntoEmail(prefillItem.textContent);
-                    this.removeRecommendationModal();
-                }
-            };
-            recArea.appendChild(prefillItem);
-            items.push(prefillItem);
-            // Allow custom instruction to update the prefilled response
-            if (submitBtn && instructionInput) {
-                submitBtn.onclick = async () => {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Updating...';
-                    try {
-                        const completions = await this.fetchAIRecommendations(
-                            { ...emailData, content: emailData.content }, // pass original email as prompt
-                            selectedTone,
-                            1,
-                            instructionInput.value,
-                            prefillItem.textContent // pass draft
-                        );
-                        if (completions && completions[0]) {
-                            prefillItem.textContent = completions[0];
-                        }
-                    } catch {
-                        prefillItem.textContent = 'Failed to update with custom instruction.';
-                    }
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit Instruction';
-                };
-            }
-            return;
+        const recommendationsContainer = recArea.querySelector('.recommendations-container') || document.createElement('div');
+        recommendationsContainer.className = 'recommendations-container';
+        
+        if (!recArea.contains(recommendationsContainer)) {
+            recArea.appendChild(recommendationsContainer);
         }
-        const numVersions = 2; // or any number you want to show
-        for (let i = 0; i < numVersions; ++i) {
-            const item = document.createElement('div');
-            item.className = 'ai-recommend-item loading';
-            item.textContent = 'Loading...';
-            recArea.appendChild(item);
-            items.push(item);
-        }
-        // Add logic for custom instruction in normal mode
-        if (!isPrefillMode && submitBtn && instructionInput) {
-            submitBtn.onclick = async () => {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Updating...';
-                try {
-                    // Regenerate recommendations with the new custom instruction
-                    await this.loadRecommendations(
-                        modal,
-                        selectedTone,
-                        emailData,
-                        instructionInput.value, // pass the updated custom instruction
-                        '', // no prefill
-                        false,
-                        submitBtn,
-                        instructionInput
-                    );
-                } catch {
-                    // Optionally show an error
-                }
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Instruction';
-            };
-        }
+
         try {
-            // Call the AI API for multiple completions in a single call
-            const completions = await this.fetchAIRecommendations(emailData, selectedTone, numVersions, customInstruction);
-            completions.forEach((reply, idx) => {
-                if (items[idx]) {
-                    items[idx].className = 'ai-recommend-item';
-                    items[idx].textContent = reply;
-                    items[idx].title = 'Click to use this reply';
-                    items[idx].tabIndex = 0;
-                    items[idx].onclick = () => {
-                        this.insertReplyIntoEmail(reply);
+            // If this is the first load (no custom instruction)
+            if (!customInstruction) {
+                recommendationsContainer.innerHTML = '';
+                // Show loading state
+                const loadingItem = document.createElement('div');
+                loadingItem.className = 'ai-recommend-item loading';
+                loadingItem.textContent = 'Loading...';
+                recommendationsContainer.appendChild(loadingItem);
+
+                // Fetch initial recommendation
+                const completions = await this.fetchAIRecommendations(emailData, selectedTone, 1, '');
+                
+                if (completions && completions[0]) {
+                    const originalVersion = completions[0];
+                    
+                    // Create recommendation item
+                    const recommendationItem = document.createElement('div');
+                    recommendationItem.className = 'ai-recommend-item current-version';
+                    recommendationItem.setAttribute('data-version', 'original');
+                    
+                    // Create content container
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'content';
+                    contentDiv.textContent = originalVersion;
+                    recommendationItem.appendChild(contentDiv);
+                    
+                    // Add version indicator
+                    const versionLabel = document.createElement('div');
+                    versionLabel.className = 'version-label';
+                    versionLabel.textContent = 'Original Version';
+                    recommendationItem.appendChild(versionLabel);
+
+                    recommendationItem.title = 'Click to use this reply';
+                    
+                    // Click handler
+                    recommendationItem.onclick = () => {
+                        this.insertReplyIntoEmail(originalVersion);
                         this.removeRecommendationModal();
                     };
-                    items[idx].onkeydown = (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            this.insertReplyIntoEmail(reply);
-                            this.removeRecommendationModal();
-                        }
-                    };
-                    // Save to history if customInstruction is present
-                    if (customInstruction && reply) {
-                        this.saveHistoryItem({
-                            date: new Date().toISOString(),
-                            prompt: emailData.content,
-                            customInstruction,
-                            reply,
-                            tone: selectedTone,
-                            subject: emailData.subject || '',
-                            sender: emailData.sender || ''
-                        });
-                    }
+
+                    // Replace loading with actual recommendation
+                    recommendationsContainer.innerHTML = '';
+                    recommendationsContainer.appendChild(recommendationItem);
                 }
-            });
+            } else {
+                // For custom instruction, keep the original and add new version
+                const originalVersionElem = recommendationsContainer.querySelector('[data-version="original"]');
+                const originalVersion = originalVersionElem ? originalVersionElem.querySelector('.content').textContent : null;
+
+                // Show loading for new version
+                const loadingItem = document.createElement('div');
+                loadingItem.className = 'ai-recommend-item loading';
+                loadingItem.textContent = 'Loading...';
+                recommendationsContainer.appendChild(loadingItem);
+
+                // Fetch new version
+                const completions = await this.fetchAIRecommendations(emailData, selectedTone, 1, customInstruction);
+                
+                if (completions && completions[0]) {
+                    const newVersion = completions[0];
+                    
+                    // Create container for version comparison if not exists
+                    let comparisonContainer = recommendationsContainer.querySelector('.version-comparison');
+                    if (!comparisonContainer) {
+                        comparisonContainer = document.createElement('div');
+                        comparisonContainer.className = 'version-comparison';
+                        recommendationsContainer.innerHTML = '';
+                        recommendationsContainer.appendChild(comparisonContainer);
+
+                        // Recreate original version element if we have it
+                        if (originalVersion) {
+                            const originalItem = document.createElement('div');
+                            originalItem.className = 'ai-recommend-item previous-version';
+                            originalItem.setAttribute('data-version', 'original');
+                            
+                            const originalContentDiv = document.createElement('div');
+                            originalContentDiv.className = 'content';
+                            originalContentDiv.textContent = originalVersion;
+                            
+                            const originalLabel = document.createElement('div');
+                            originalLabel.className = 'version-label';
+                            originalLabel.textContent = 'Original Version';
+                            
+                            originalItem.appendChild(originalContentDiv);
+                            originalItem.appendChild(originalLabel);
+                            
+                            originalItem.onclick = () => {
+                                this.insertReplyIntoEmail(originalVersion);
+                                this.removeRecommendationModal();
+                            };
+                            
+                            comparisonContainer.appendChild(originalItem);
+                        }
+                    }
+
+                    // Create new version element
+                    const newVersionItem = document.createElement('div');
+                    newVersionItem.className = 'ai-recommend-item current-version';
+                    
+                    const newContentDiv = document.createElement('div');
+                    newContentDiv.className = 'content';
+                    newContentDiv.textContent = newVersion;
+                    
+                    const newVersionLabel = document.createElement('div');
+                    newVersionLabel.className = 'version-label';
+                    newVersionLabel.textContent = 'New Version';
+                    
+                    newVersionItem.appendChild(newContentDiv);
+                    newVersionItem.appendChild(newVersionLabel);
+                    
+                    newVersionItem.onclick = () => {
+                        this.insertReplyIntoEmail(newVersion);
+                        this.removeRecommendationModal();
+                    };
+
+                    // Replace loading with new version
+                    loadingItem.remove();
+                    comparisonContainer.appendChild(newVersionItem);
+
+                    // Save to history
+                    this.saveHistoryItem({
+                        date: new Date().toISOString(),
+                        prompt: emailData.content,
+                        customInstruction,
+                        reply: newVersion,
+                        tone: selectedTone,
+                        subject: emailData.subject || '',
+                        sender: emailData.sender || ''
+                    });
+                }
+            }
         } catch (err) {
-            recArea.innerHTML = `<div class=\"ai-recommend-item error\">Failed to load recommendations. Please try again.</div>`;
+            console.error('Error in loadRecommendations:', err);
+            recommendationsContainer.innerHTML = `<div class="ai-recommend-item error">Failed to load recommendations. Please try again.</div>`;
         }
     }
 
@@ -564,193 +623,24 @@ class EmailReplyGenerator {
         }
     }
 
-    showHistoryModal(historyItems) {
-        // Store the current modal content before removing it
-        const previousModal = document.querySelector('.ai-recommend-modal');
-        const previousOverlay = document.querySelector('.ai-recommend-modal-overlay');
-        if (previousModal) {
-            previousModal.style.display = 'none';
-        }
-        
-        // Modal overlay (reuse existing if present)
-        const overlay = previousOverlay || document.createElement('div');
-        overlay.className = 'ai-recommend-modal-overlay';
-        
-        // Modal box
-        const modal = document.createElement('div');
-        modal.className = 'ai-recommend-modal';
-        modal.style.maxWidth = '600px';
-        
-        // Header container for title and back button
-        const headerContainer = document.createElement('div');
-        headerContainer.style.display = 'flex';
-        headerContainer.style.alignItems = 'center';
-        headerContainer.style.marginBottom = '16px';
-        headerContainer.style.position = 'relative';
-        
-        // Back button
-        const backBtn = document.createElement('button');
-        backBtn.className = 'ai-recommend-back-btn';
-        backBtn.innerHTML = '&larr;'; // Left arrow
-        backBtn.style.position = 'absolute';
-        backBtn.style.left = '0';
-        backBtn.style.background = 'none';
-        backBtn.style.border = 'none';
-        backBtn.style.fontSize = '20px';
-        backBtn.style.color = '#4b5563';
-        backBtn.style.cursor = 'pointer';
-        backBtn.style.padding = '5px 10px';
-        backBtn.title = 'Back to recommendations';
-        backBtn.onclick = () => {
-            modal.remove();
-            if (previousModal) {
-                previousModal.style.display = 'block';
-            }
-        };
-        headerContainer.appendChild(backBtn);
-        
-        // Title
-        const title = document.createElement('h3');
-        title.textContent = 'AI Reply History';
-        title.style.textAlign = 'center';
-        title.style.color = '#2d3748';
-        title.style.width = '100%';
-        headerContainer.appendChild(title);
-        
-        modal.appendChild(headerContainer);
-
-        // History list container
-        const listContainer = document.createElement('div');
-        listContainer.style.maxHeight = '400px';
-        listContainer.style.overflowY = 'auto';
-        listContainer.style.padding = '0 10px';
-        modal.appendChild(listContainer);
-
-        if (!historyItems || historyItems.length === 0) {
-            const empty = document.createElement('div');
-            empty.textContent = 'No history found. Custom instructions with responses will appear here.';
-            empty.style.textAlign = 'center';
-            empty.style.color = '#888';
-            empty.style.padding = '20px';
-            listContainer.appendChild(empty);
-        } else {
-            historyItems.slice().reverse().forEach(item => {
-                const entry = document.createElement('div');
-                entry.className = 'ai-recommend-item';
-                entry.style.marginBottom = '15px';
-                entry.style.cursor = 'default';
-                
-                const header = document.createElement('div');
-                header.style.borderBottom = '1px solid #e5e7eb';
-                header.style.paddingBottom = '8px';
-                header.style.marginBottom = '8px';
-                header.innerHTML = `
-                    <div style="color:#4b5563;font-size:12px;">
-                        <b>Date:</b> ${new Date(item.date).toLocaleString()}
-                    </div>
-                    <div style="color:#7c3aed;font-size:13px;">
-                        <b>Tone:</b> ${item.tone}
-                    </div>
-                `;
-                
-                const content = document.createElement('div');
-                content.innerHTML = `
-                    <div style="margin-bottom:8px;">
-                        <b style="color:#4b5563;">Custom Instruction:</b>
-                        <div style="color:#666;font-size:13px;margin-top:4px;">${item.customInstruction || '(none)'}</div>
-                    </div>
-                    <div>
-                        <b style="color:#4b5563;">Generated Reply:</b>
-                        <div style="color:#222;font-size:13px;margin-top:4px;white-space:pre-wrap;">${item.reply}</div>
-                    </div>
-                `;
-
-                entry.appendChild(header);
-                entry.appendChild(content);
-                listContainer.appendChild(entry);
-            });
-        }
-
-        // Close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'ai-recommend-close';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = () => {
-            this.removeRecommendationModal();
-            if (previousModal) {
-                previousModal.remove();
-            }
-        };
-        modal.appendChild(closeBtn);
-
-        if (!previousOverlay) {
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-        } else {
-            overlay.appendChild(modal);
-        }
-
-        // Remove on overlay click
-        overlay.addEventListener('mousedown', (e) => {
-            if (e.target === overlay) {
-                this.removeRecommendationModal();
-                if (previousModal) {
-                    previousModal.remove();
-                }
-            }
-        });
-
-        // Remove on Escape
-        document.addEventListener('keydown', this._recommendModalEscapeHandler = (evt) => {
-            if (evt.key === 'Escape') {
-                this.removeRecommendationModal();
-                if (previousModal) {
-                    previousModal.remove();
-                }
-            }
-        });
-    }
-
-    // Add new methods for history management
     async saveHistoryItem(item) {
         try {
-            console.log('Saving history item:', item);
             const result = await chrome.storage.local.get(['ai_reply_history']);
-            console.log('Current history:', result.ai_reply_history);
             const history = result.ai_reply_history || [];
             history.push(item);
             await chrome.storage.local.set({ ai_reply_history: history });
-            console.log('History saved successfully. New length:', history.length);
-            // Verify the save
-            const verification = await chrome.storage.local.get(['ai_reply_history']);
-            console.log('Verification - saved history:', verification.ai_reply_history);
         } catch (e) {
-            console.error('Error saving history:', e);
-            // Show notification to user
-            this.showNotification('Failed to save to history', 'error');
+            console.error('Error saving to history:', e);
         }
     }
 
     async getHistoryItems() {
         try {
-            console.log('Fetching history items...');
             const result = await chrome.storage.local.get(['ai_reply_history']);
-            console.log('Fetched history items:', result.ai_reply_history);
             return result.ai_reply_history || [];
         } catch (e) {
             console.error('Error getting history:', e);
-            this.showNotification('Failed to load history', 'error');
             return [];
-        }
-    }
-
-    // Add a method to clear history (useful for testing)
-    async clearHistory() {
-        try {
-            await chrome.storage.local.remove(['ai_reply_history']);
-            console.log('History cleared successfully');
-        } catch (e) {
-            console.error('Error clearing history:', e);
         }
     }
 }

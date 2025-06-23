@@ -1,3 +1,13 @@
+// At the very top of the file, add a loader for utils/history.js if not already loaded
+(function loadHistoryUtils() {
+    if (!window.saveHistoryItem || !window.getHistoryItems) {
+        const script = document.createElement('script');
+        script.src = chrome.runtime.getURL('utils/history.js');
+        script.onload = function() { this.remove(); };
+        (document.head || document.documentElement).appendChild(script);
+    }
+})();
+
 // Content script for AI Email Reply Generator
 class EmailReplyGenerator {
     constructor() {
@@ -200,6 +210,18 @@ class EmailReplyGenerator {
         modal.appendChild(instructionLabel);
         modal.appendChild(instructionInput);
         modal.appendChild(submitBtn);
+        // Show History button (move here, after submitBtn)
+        const historyBtn = document.createElement('button');
+        historyBtn.className = 'ai-recommend-history-btn';
+        historyBtn.textContent = 'Show History';
+        historyBtn.type = 'button';
+        historyBtn.title = 'Show your previous AI replies';
+        historyBtn.onclick = async (e) => {
+            e.preventDefault();
+            const history = await this.getHistoryItems();
+            this.showHistoryModal(history);
+        };
+        modal.appendChild(historyBtn);
         // Close button
         const closeBtn = document.createElement('button');
         closeBtn.className = 'ai-recommend-close';
@@ -486,6 +508,18 @@ class EmailReplyGenerator {
                             this.removeRecommendationModal();
                         }
                     };
+                    // Save to history if customInstruction is present
+                    if (customInstruction && reply) {
+                        this.saveHistoryItem({
+                            date: new Date().toISOString(),
+                            prompt: emailData.content,
+                            customInstruction,
+                            reply,
+                            tone: selectedTone,
+                            subject: emailData.subject || '',
+                            sender: emailData.sender || ''
+                        });
+                    }
                 }
             });
         } catch (err) {
@@ -530,6 +564,195 @@ class EmailReplyGenerator {
         }
     }
 
+    showHistoryModal(historyItems) {
+        // Store the current modal content before removing it
+        const previousModal = document.querySelector('.ai-recommend-modal');
+        const previousOverlay = document.querySelector('.ai-recommend-modal-overlay');
+        if (previousModal) {
+            previousModal.style.display = 'none';
+        }
+        
+        // Modal overlay (reuse existing if present)
+        const overlay = previousOverlay || document.createElement('div');
+        overlay.className = 'ai-recommend-modal-overlay';
+        
+        // Modal box
+        const modal = document.createElement('div');
+        modal.className = 'ai-recommend-modal';
+        modal.style.maxWidth = '600px';
+        
+        // Header container for title and back button
+        const headerContainer = document.createElement('div');
+        headerContainer.style.display = 'flex';
+        headerContainer.style.alignItems = 'center';
+        headerContainer.style.marginBottom = '16px';
+        headerContainer.style.position = 'relative';
+        
+        // Back button
+        const backBtn = document.createElement('button');
+        backBtn.className = 'ai-recommend-back-btn';
+        backBtn.innerHTML = '&larr;'; // Left arrow
+        backBtn.style.position = 'absolute';
+        backBtn.style.left = '0';
+        backBtn.style.background = 'none';
+        backBtn.style.border = 'none';
+        backBtn.style.fontSize = '20px';
+        backBtn.style.color = '#4b5563';
+        backBtn.style.cursor = 'pointer';
+        backBtn.style.padding = '5px 10px';
+        backBtn.title = 'Back to recommendations';
+        backBtn.onclick = () => {
+            modal.remove();
+            if (previousModal) {
+                previousModal.style.display = 'block';
+            }
+        };
+        headerContainer.appendChild(backBtn);
+        
+        // Title
+        const title = document.createElement('h3');
+        title.textContent = 'AI Reply History';
+        title.style.textAlign = 'center';
+        title.style.color = '#2d3748';
+        title.style.width = '100%';
+        headerContainer.appendChild(title);
+        
+        modal.appendChild(headerContainer);
+
+        // History list container
+        const listContainer = document.createElement('div');
+        listContainer.style.maxHeight = '400px';
+        listContainer.style.overflowY = 'auto';
+        listContainer.style.padding = '0 10px';
+        modal.appendChild(listContainer);
+
+        if (!historyItems || historyItems.length === 0) {
+            const empty = document.createElement('div');
+            empty.textContent = 'No history found. Custom instructions with responses will appear here.';
+            empty.style.textAlign = 'center';
+            empty.style.color = '#888';
+            empty.style.padding = '20px';
+            listContainer.appendChild(empty);
+        } else {
+            historyItems.slice().reverse().forEach(item => {
+                const entry = document.createElement('div');
+                entry.className = 'ai-recommend-item';
+                entry.style.marginBottom = '15px';
+                entry.style.cursor = 'default';
+                
+                const header = document.createElement('div');
+                header.style.borderBottom = '1px solid #e5e7eb';
+                header.style.paddingBottom = '8px';
+                header.style.marginBottom = '8px';
+                header.innerHTML = `
+                    <div style="color:#4b5563;font-size:12px;">
+                        <b>Date:</b> ${new Date(item.date).toLocaleString()}
+                    </div>
+                    <div style="color:#7c3aed;font-size:13px;">
+                        <b>Tone:</b> ${item.tone}
+                    </div>
+                `;
+                
+                const content = document.createElement('div');
+                content.innerHTML = `
+                    <div style="margin-bottom:8px;">
+                        <b style="color:#4b5563;">Custom Instruction:</b>
+                        <div style="color:#666;font-size:13px;margin-top:4px;">${item.customInstruction || '(none)'}</div>
+                    </div>
+                    <div>
+                        <b style="color:#4b5563;">Generated Reply:</b>
+                        <div style="color:#222;font-size:13px;margin-top:4px;white-space:pre-wrap;">${item.reply}</div>
+                    </div>
+                `;
+
+                entry.appendChild(header);
+                entry.appendChild(content);
+                listContainer.appendChild(entry);
+            });
+        }
+
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'ai-recommend-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = () => {
+            this.removeRecommendationModal();
+            if (previousModal) {
+                previousModal.remove();
+            }
+        };
+        modal.appendChild(closeBtn);
+
+        if (!previousOverlay) {
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        } else {
+            overlay.appendChild(modal);
+        }
+
+        // Remove on overlay click
+        overlay.addEventListener('mousedown', (e) => {
+            if (e.target === overlay) {
+                this.removeRecommendationModal();
+                if (previousModal) {
+                    previousModal.remove();
+                }
+            }
+        });
+
+        // Remove on Escape
+        document.addEventListener('keydown', this._recommendModalEscapeHandler = (evt) => {
+            if (evt.key === 'Escape') {
+                this.removeRecommendationModal();
+                if (previousModal) {
+                    previousModal.remove();
+                }
+            }
+        });
+    }
+
+    // Add new methods for history management
+    async saveHistoryItem(item) {
+        try {
+            console.log('Saving history item:', item);
+            const result = await chrome.storage.local.get(['ai_reply_history']);
+            console.log('Current history:', result.ai_reply_history);
+            const history = result.ai_reply_history || [];
+            history.push(item);
+            await chrome.storage.local.set({ ai_reply_history: history });
+            console.log('History saved successfully. New length:', history.length);
+            // Verify the save
+            const verification = await chrome.storage.local.get(['ai_reply_history']);
+            console.log('Verification - saved history:', verification.ai_reply_history);
+        } catch (e) {
+            console.error('Error saving history:', e);
+            // Show notification to user
+            this.showNotification('Failed to save to history', 'error');
+        }
+    }
+
+    async getHistoryItems() {
+        try {
+            console.log('Fetching history items...');
+            const result = await chrome.storage.local.get(['ai_reply_history']);
+            console.log('Fetched history items:', result.ai_reply_history);
+            return result.ai_reply_history || [];
+        } catch (e) {
+            console.error('Error getting history:', e);
+            this.showNotification('Failed to load history', 'error');
+            return [];
+        }
+    }
+
+    // Add a method to clear history (useful for testing)
+    async clearHistory() {
+        try {
+            await chrome.storage.local.remove(['ai_reply_history']);
+            console.log('History cleared successfully');
+        } catch (e) {
+            console.error('Error clearing history:', e);
+        }
+    }
 }
 
 // Initialize the email reply generator

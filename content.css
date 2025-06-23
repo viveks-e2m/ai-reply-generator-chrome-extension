@@ -384,4 +384,27 @@
 .ai-recommend-submit-btn:hover,
 .ai-recommend-submit-btn:focus {
     background: #1a202c;
+}
+
+.ai-recommend-history-btn {
+    margin-bottom: 16px;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #e0e7ef 0%, #b6c6e3 100%);
+    color: #4b5563;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    display: block;
+    box-shadow: 0 1px 4px rgba(60, 60, 120, 0.04);
+}
+.ai-recommend-history-btn:hover,
+.ai-recommend-history-btn:focus {
+    background: linear-gradient(90deg, #b6c6e3 0%, #e0e7ef 100%);
+    color: #222;
+    border-color: #4b5563;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
 } 

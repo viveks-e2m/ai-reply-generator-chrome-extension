@@ -344,4 +344,44 @@
     color: #1a202c;
     text-decoration: none;
     box-shadow: 0 2px 8px rgba(60, 60, 120, 0.06);
+}
+
+/* AI Recommendation Modal Custom Instruction Styles */
+.ai-recommend-label {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 8px 0 4px 0;
+    display: block;
+}
+
+.ai-recommend-textarea {
+    width: 100%;
+    min-height: 38px;
+    resize: vertical;
+    margin-bottom: 8px;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 7px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.ai-recommend-submit-btn {
+    margin-bottom: 12px;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    background: #2d3748;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    display: block;
+}
+.ai-recommend-submit-btn:hover,
+.ai-recommend-submit-btn:focus {
+    background: #1a202c;
 } 

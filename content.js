@@ -182,23 +182,12 @@ class EmailReplyGenerator {
         // Custom instruction input (moved below recommendations)
         const instructionLabel = document.createElement('label');
         instructionLabel.textContent = 'Custom instruction or feedback (optional):';
-        instructionLabel.style.fontSize = '13px';
-        instructionLabel.style.fontWeight = '500';
-        instructionLabel.style.margin = '8px 0 4px 0';
+        instructionLabel.className = 'ai-recommend-label';
         instructionLabel.htmlFor = 'ai-custom-instruction';
         const instructionInput = document.createElement('textarea');
         instructionInput.id = 'ai-custom-instruction';
         instructionInput.placeholder = 'Add extra instructions for the AI or give feedback...';
-        instructionInput.style.width = '100%';
-        instructionInput.style.minHeight = '38px';
-        instructionInput.style.resize = 'vertical';
-        instructionInput.style.marginBottom = '8px';
-        instructionInput.style.fontSize = '13px';
-        instructionInput.style.padding = '7px 10px';
-        instructionInput.style.border = '1.5px solid #e5e7eb';
-        instructionInput.style.borderRadius = '7px';
-        instructionInput.style.boxSizing = 'border-box';
-        instructionInput.style.fontFamily = 'inherit';
+        instructionInput.className = 'ai-recommend-textarea';
         instructionInput.value = customInstruction;
         instructionInput.addEventListener('input', (e) => {
             customInstruction = e.target.value;
@@ -207,23 +196,6 @@ class EmailReplyGenerator {
         const submitBtn = document.createElement('button');
         submitBtn.textContent = 'Submit Instruction';
         submitBtn.className = 'ai-recommend-submit-btn';
-        submitBtn.style.marginBottom = '12px';
-        submitBtn.style.width = '100%';
-        submitBtn.style.padding = '10px 0';
-        submitBtn.style.fontSize = '14px';
-        submitBtn.style.fontWeight = '600';
-        submitBtn.style.background = '#2d3748';
-        submitBtn.style.color = '#fff';
-        submitBtn.style.border = 'none';
-        submitBtn.style.borderRadius = '7px';
-        submitBtn.style.cursor = 'pointer';
-        submitBtn.style.transition = 'background 0.18s, color 0.18s, box-shadow 0.18s';
-        submitBtn.addEventListener('mouseenter', () => {
-            submitBtn.style.background = '#1a202c';
-        });
-        submitBtn.addEventListener('mouseleave', () => {
-            submitBtn.style.background = '#2d3748';
-        });
         // Add label, textarea, and button after recommendations
         modal.appendChild(instructionLabel);
         modal.appendChild(instructionInput);

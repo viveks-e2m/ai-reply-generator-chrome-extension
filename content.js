@@ -256,27 +256,6 @@ class EmailReplyGenerator {
         this._recommendModalEscapeHandler = null;
     }
 
-    async handleAIButtonClick(selectedTone) {
-        try {
-            const settings = await this.getSettings();
-            const emailData = this.extractEmailContent();
-            if (!emailData.subject || !emailData.content) {
-                this.showNotification('Could not extract email content', 'error');
-                return;
-            }
-            // Use selectedTone from popover if provided, else fallback to settings.selectedTone
-            const tone = selectedTone || settings.selectedTone || 'casual';
-            const reply = await this.generateAIReply(emailData, { selectedTone: tone });
-            if (reply) {
-                this.insertReplyIntoEmail(reply);
-                this.showNotification('AI reply generated successfully!', 'success');
-            }
-        } catch (error) {
-            console.error('Error generating AI reply:', error);
-            this.showNotification('Error generating reply: ' + error.message, 'error');
-        }
-    }
-
     async getSettings() {
         return new Promise((resolve) => {
             chrome.storage.sync.get(['selectedTone'], (result) => {
@@ -573,11 +552,10 @@ class EmailReplyGenerator {
 
     async fetchAIRecommendations(emailData, tone, n, customInstruction = '', draft = '', onEach) {
         let prompt = emailData.content;
+        console.log('emailData', emailData);
+        
         if (emailData.thread && emailData.thread.length > 0) {
             prompt += '\n\nThread History:\n' + emailData.thread.join('\n---\n');
-        }
-        if (customInstruction && customInstruction.trim()) {
-            prompt += '\n\nAdditional instruction: ' + customInstruction.trim();
         }
         const body = {
             prompt: prompt,
@@ -595,7 +573,7 @@ class EmailReplyGenerator {
                 body: JSON.stringify(body)
             });
             if (!response.ok) throw new Error('API error');
-            const data = await response.json();
+            const data = await response.json(); 
             if (Array.isArray(data.replies)) {
                 if (onEach) data.replies.forEach((reply, idx) => onEach(idx, reply));
                 return data.replies;
@@ -610,16 +588,6 @@ class EmailReplyGenerator {
     }
 
 }
-
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.action === 'generateReply') {
-        // Handle manual generation from popup
-        const generator = new EmailReplyGenerator();
-        generator.handleAIButtonClick();
-        sendResponse({ success: true });
-    }
-});
 
 // Initialize the email reply generator
 const emailReplyGenerator = new EmailReplyGenerator();

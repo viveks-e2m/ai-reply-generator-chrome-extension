@@ -102,28 +102,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     }
 });
 
-// Handle context menu (optional feature)
-chrome.runtime.onInstalled.addListener(function() {
-    chrome.contextMenus.create({
-        id: 'generateAIReply',
-        title: 'Generate AI Reply',
-        contexts: ['page'],
-        documentUrlPatterns: [
-            'https://mail.google.com/*',
-            'https://outlook.live.com/*',
-            'https://outlook.office.com/*'
-        ]
-    });
-});
-
-chrome.contextMenus.onClicked.addListener(function(info, tab) {
-    if (info.menuItemId === 'generateAIReply') {
-        chrome.tabs.sendMessage(tab.id, {
-            action: 'generateReply'
-        });
-    }
-});
-
 // Error handling
 chrome.runtime.onSuspend.addListener(function() {
     console.log('Extension is being suspended');

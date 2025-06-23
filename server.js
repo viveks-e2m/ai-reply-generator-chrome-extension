@@ -8,16 +8,6 @@ app.use(express.json());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Now loaded from .env
 
-// Check for API key and log status
-if (!OPENAI_API_KEY) {
-  console.error(
-    "FATAL ERROR: OPENAI_API_KEY is not set. Please create a .env file and add your key."
-  );
-  process.exit(1); // Stop the server if the key isn't found
-} else {
-  console.log("OpenAI API Key loaded successfully.");
-}
-
 app.post("/generate-reply", async (req, res) => {
   console.log("Received a request to /generate-reply");
   try {

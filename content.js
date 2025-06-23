@@ -318,35 +318,6 @@ class EmailReplyGenerator {
         return data;
     }
 
-    async generateAIReply(emailData, settings) {
-        // Use buildPrompt to include the full context
-        const prompt = this.buildPrompt(emailData, settings.selectedTone);
-        const response = await fetch('http://localhost:3001/generate-reply', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt: prompt,
-                tone: settings.selectedTone
-            })
-        });
-        const data = await response.json();
-        return data.reply;
-    }
-
-    buildPrompt(emailData, tone) {
-        const toneInstructions = {
-            casual: 'Write a friendly, casual reply as if talking to a friend. Do NOT include a subject line in your reply. Only generate the body of the email.',
-            formal: 'Write a professional, formal reply suitable for business communication. Do NOT include a subject line in your reply. Only generate the body of the email.',
-            empowering: 'Write an encouraging and motivational reply that empowers the recipient. Do NOT include a subject line in your reply. Only generate the body of the email.',
-            "not-interested": 'Write a polite but firm reply declining the offer or request. Do NOT include a subject line in your reply. Only generate the body of the email.'
-        };
-        // Format thread as a readable conversation
-        const threadHistory = (emailData.thread || []).map(
-            msg => `From: ${msg.sender}\nContent: ${msg.content}`
-        ).join('\n---\n');
-        return `\nEmail Context:\nSubject: ${emailData.subject}\nFrom: ${emailData.sender}\nContent: ${emailData.content}\n\nThread History:\n${threadHistory}\n\nInstructions: ${toneInstructions[tone] || toneInstructions.casual}\n\nPlease generate ONLY the body of a contextual email reply (do NOT include a subject line):\n1. Address the main points in the email\n2. Maintain the specified tone\n3. Be concise but complete\n4. Sound natural and human-like\n5. Include appropriate greetings and closings\n\nReply body:`;
-    }
-
     insertReplyIntoEmail(reply) {
         switch (this.currentEmailClient) {
             case 'gmail':

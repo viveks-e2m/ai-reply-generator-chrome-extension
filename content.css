@@ -1,28 +1,30 @@
 /* AI Reply Button Styles */
-.ai-reply-btn {
+.ai-reply-btn, .ai-update-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 10px 16px;
     margin: 0 4px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 36px;
+    line-height: 36px;
 }
 
-.ai-reply-btn:hover {
+.ai-reply-btn:hover, .ai-update-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
-.ai-reply-btn:active {
+.ai-reply-btn:active, .ai-update-btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -183,24 +185,30 @@
     line-height: 32px;
     font-size: 14px;
     font-weight: 500;
-    color: #7c3aed;
+    color: #4b5563;
     background: none;
     border: none;
     border-radius: 16px;
     margin-right: 4px;
     margin-left: 0;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.4s cubic-bezier(0.4,0,0.2,1), color 0.18s;
     outline: none;
     vertical-align: middle;
     user-select: none;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
+    box-shadow: none;
+    background-size: 200% 100%;
+    background-position: left center;
 }
 .ai-reply-span:hover, .ai-reply-span:focus {
-    background: #f3e8ff;
-    color: #5b21b6;
-    text-decoration: underline;
+    background: linear-gradient(90deg, #e0e7ef 0%, #b6c6e3 50%, #e0e7ef 100%);
+    background-size: 200% 100%;
+    background-position: right center;
+    color: #1a202c;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(60, 60, 120, 0.06);
 }
 
 /* Optional: custom color for AI (bkAI) */
@@ -212,92 +220,121 @@
     background: #ede9fe;
 }
 
-/* AI Recommendation Modal Styles */
+/* Formal & Professional AI Recommendation Modal Styles */
 .ai-recommend-modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(40, 40, 60, 0.18);
+    background: rgba(44, 62, 80, 0.10);
     z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 20px;
+    align-items: flex-start;
+    padding-top: 5vh;
 }
 .ai-recommend-modal {
     background: #fff;
     border-radius: 14px;
-    box-shadow: 0 8px 32px rgba(60, 60, 120, 0.18);
-    min-width: 260px;
-    max-width: 90vw;
-    padding: 16px 12px 10px 12px;
+    box-shadow: 0 8px 32px rgba(40, 60, 90, 0.13);
+    min-width: 240px;
+    max-width: 420px;
+    padding: 28px 22px 18px 22px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    animation: fadeIn 0.18s;
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    border: 1.5px solid #e5e7eb;
+    max-height: 90vh;
 }
 .ai-recommend-close {
     position: absolute;
-    top: 6px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: #888;
+    top: -14px;
+    right: -14px;
+    width: 38px;
+    height: 38px;
+    aspect-ratio: 1/1;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    font-size: 22px;
+    font-weight: 700;
+    color: #b0b3b8;
     cursor: pointer;
-    transition: color 0.15s;
-    z-index: 2;
+    transition: color 0.18s, background 0.18s, box-shadow 0.18s;
+    z-index: 10;
+    border-radius: 50%;
+    line-height: 1;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(60, 60, 120, 0.13);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
-.ai-recommend-close:hover {
-    color: #c026d3;
+.ai-recommend-close:hover, .ai-recommend-close:focus {
+    color: #fff;
+    background: #4b5563;
+    border-color: #4b5563;
+    box-shadow: 0 4px 16px rgba(60, 60, 120, 0.18);
 }
 .ai-recommend-tonebar {
     display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 18px;
     justify-content: center;
 }
 .ai-recommend-tonebtn {
-    background: #f3e8ff;
-    color: #7c3aed;
-    border: 1.5px solid #e1e5e9;
-    border-radius: 7px;
-    padding: 5px 8px;
-    font-size: 12px;
+    background: #f4f6fa;
+    color: #2d3748;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.18s;
+    outline: none;
+    box-shadow: 0 1px 4px rgba(60, 60, 120, 0.04);
 }
 .ai-recommend-tonebtn.selected, .ai-recommend-tonebtn:hover {
-    background: #7c3aed;
-    color: #fff;
-    border-color: #7c3aed;
+    background: #e5e7eb;
+    color: #1a202c;
+    border-color: #4b5563;
 }
 .ai-recommend-list {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     margin-bottom: 2px;
 }
 .ai-recommend-item {
-    background: #f8fafc;
-    border: 1.5px solid #e1e5e9;
-    border-radius: 8px;
-    padding: 6px 8px;
-    font-size: 13px;
-    color: #333;
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #222;
     cursor: pointer;
     transition: background 0.15s, border 0.15s;
     outline: none;
-    min-height: 22px;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04);
+    min-height: 28px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.03);
     white-space: pre-line;
+    margin-bottom: 2px;
+    position: relative;
+    padding: 16px;
+    line-height: 1.5;
+    margin-bottom: 12px;
 }
 .ai-recommend-item:hover, .ai-recommend-item:focus {
-    background: #ede9fe;
-    border-color: #7c3aed;
+    background: #f1f5f9;
+    border-color: #4b5563;
 }
 .ai-recommend-item.loading {
-    background: repeating-linear-gradient(90deg, #f3e8ff 0 40px, #f8fafc 40px 80px);
+    background: repeating-linear-gradient(90deg, #f4f6fa 0 40px, #f9fafb 40px 80px);
     color: #bbb;
     border-style: dashed;
     animation: shimmer 1.2s linear infinite;
@@ -307,7 +344,206 @@
     100% { background-position: 80px 0; }
 }
 .ai-recommend-item.error {
-    background: #f8d7da;
-    color: #721c24;
+    background: #fbeaea;
+    color: #a94442;
     border: 1.5px solid #f5c6cb;
+}
+
+.ai-reply-span.bkAI:hover, .ai-reply-span.bkAI:focus {
+    background: linear-gradient(90deg, #e0e7ef 0%, #b6c6e3 50%, #e0e7ef 100%);
+    background-size: 200% 100%;
+    background-position: right center;
+    color: #1a202c;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(60, 60, 120, 0.06);
+}
+
+/* AI Recommendation Modal Custom Instruction Styles */
+.ai-recommend-label {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 8px 0 4px 0;
+    display: block;
+}
+
+.ai-recommend-textarea {
+    width: 100%;
+    min-height: 38px;
+    resize: vertical;
+    margin-bottom: 8px;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 7px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.ai-recommend-submit-btn {
+    margin-bottom: 12px;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    background: #2d3748;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+    display: block;
+}
+.ai-recommend-submit-btn:hover,
+.ai-recommend-submit-btn:focus {
+    background: #1a202c;
+}
+
+/* Version comparison styles */
+.recommendations-container {
+    margin-bottom: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+    scroll-behavior: smooth;
+}
+
+.recommendations-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.recommendations-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.recommendations-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.recommendations-container::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+.version-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-recommend-item {
+    position: relative;
+    padding: 16px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+/* Version label positioning */
+.version-label {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 4px 8px;
+    background: rgba(243, 244, 246, 0.8);
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+}
+
+.ai-recommend-item.previous-version {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+.ai-recommend-item.current-version {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+/* Add padding at the bottom of items to accommodate the version label */
+.ai-recommend-item {
+    padding-bottom: 36px;
+}
+
+/* Ensure text doesn't overlap with version label */
+.ai-recommend-item .content {
+    margin-bottom: 4px;
+}
+
+.ai-recommend-submit-btn {
+    background: #7c3aed;
+    margin-top: 8px;
+}
+
+.ai-recommend-submit-btn:hover,
+.ai-recommend-submit-btn:focus {
+    background: #6d28d9;
+}
+
+/* Custom instruction styles */
+.instruction-container {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: rgba(124, 58, 237, 0.05);
+    border-radius: 6px;
+    border-left: 3px solid #7c3aed;
+}
+
+.instruction-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #7c3aed;
+    margin-bottom: 4px;
+}
+
+.instruction-text {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+/* Update existing item styles to accommodate instructions */
+.ai-recommend-item {
+    position: relative;
+    padding: 16px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    padding-bottom: 36px;
+}
+
+.ai-recommend-item .content {
+    margin-bottom: 4px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+/* Ensure version label stays at bottom */
+.version-label {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 4px 8px;
+    background: rgba(243, 244, 246, 0.8);
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    z-index: 1;
+}
+
+/* Remove all hover effects from Gmail's button containers */
+.btC:hover, .dC:hover, .bAK:hover, .aDh:hover, .aDj:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    transition: none !important;
+}
+
+.btC, .dC, .bAK, .aDh, .aDj {
+    transition: none !important;
 } 

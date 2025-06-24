@@ -13,15 +13,9 @@ chrome.runtime.onInstalled.addListener(function(details) {
         
         // Open welcome page or show instructions
         chrome.tabs.create({
-            url: 'https://github.com/your-repo/ai-email-reply-generator#readme'
+            url: 'https://github.com/viveks-e2m/ai-reply-generator-chrome-extension/blob/main/README.md'
         });
     }
-});
-
-// Handle extension icon click
-chrome.action.onClicked.addListener(function(tab) {
-    // This will only trigger if no popup is defined in manifest
-    // Since we have a popup, this won't be called
 });
 
 // Listen for messages from content scripts and popup
@@ -104,28 +98,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
                     });
                 }
             });
-        });
-    }
-});
-
-// Handle context menu (optional feature)
-chrome.runtime.onInstalled.addListener(function() {
-    chrome.contextMenus.create({
-        id: 'generateAIReply',
-        title: 'Generate AI Reply',
-        contexts: ['page'],
-        documentUrlPatterns: [
-            'https://mail.google.com/*',
-            'https://outlook.live.com/*',
-            'https://outlook.office.com/*'
-        ]
-    });
-});
-
-chrome.contextMenus.onClicked.addListener(function(info, tab) {
-    if (info.menuItemId === 'generateAIReply') {
-        chrome.tabs.sendMessage(tab.id, {
-            action: 'generateReply'
         });
     }
 });

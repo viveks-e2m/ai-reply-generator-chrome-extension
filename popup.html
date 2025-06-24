@@ -5,65 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Email Reply Generator</title>
     <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>AI Email Reply Generator</h1>
-            <p>Generate contextual email replies using AI</p>
+            <h1>AI Email Reply</h1>
+            <p>Smart responses, powered by AI</p>
         </div>
 
         <div class="main-content">
-            <div class="section">
-                <h3>Select Tone</h3>
-                <div class="tone-options">
-                    <button class="tone-btn" data-tone="casual">
-                        <span class="tone-icon">😊</span>
-                        <span class="tone-text">Casual</span>
-                    </button>
-                    <button class="tone-btn" data-tone="formal">
-                        <span class="tone-icon">👔</span>
-                        <span class="tone-text">Formal</span>
-                    </button>
-                    <button class="tone-btn" data-tone="empowering">
-                        <span class="tone-icon">💪</span>
-                        <span class="tone-text">Empowering</span>
-                    </button>
-                    <button class="tone-btn" data-tone="not-interested">
-                        <span class="tone-icon">🚫</span>
-                        <span class="tone-text">Not Interested</span>
-                    </button>
+            <div class="supported-clients">
+                <h3>Supported Email Clients</h3>
+                <div class="client-list">
+                    <div class="client">
+                        <i class="fab fa-google"></i>
+                        <span>Gmail</span>
+                    </div>
+                    <div class="client">
+                        <i class="fab fa-microsoft"></i>
+                        <span>Outlook</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h3>API Configuration</h3>
-                <div class="api-config">
-                    <label for="apiKey">OpenAI API Key:</label>
-                    <input type="password" id="apiKey" placeholder="Enter your OpenAI API key">
-                    <button id="saveApiKey" class="btn btn-secondary">Save API Key</button>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>Generate Reply</h3>
-                <div class="generate-section">
-                    <button id="generateReply" class="btn btn-primary" disabled>
-                        <span class="btn-icon">🤖</span>
-                        Generate Reply
-                    </button>
-                    <p class="note">Click the "AI Reply" button in your email client to generate a reply</p>
-                </div>
-            </div>
-
-            <div class="section" id="statusSection" style="display: none;">
-                <h3>Status</h3>
-                <div id="status" class="status-message"></div>
+            <div class="usage-guide">
+                <h3><i class="fas fa-info-circle"></i> How to Use</h3>
+                <p>Look for the "AI Reply" or "AI Update" buttons in your email client to generate responses.</p>
             </div>
         </div>
 
         <div class="footer">
-            <p>Powered by OpenAI GPT</p>
+            <div class="status-indicator">
+                <span class="status-dot active"></span>
+                <span>Extension Active</span>
+            </div>
+            <p class="version">v1.0.0</p>
         </div>
     </div>
 

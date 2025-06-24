@@ -103,7 +103,7 @@ class EmailReplyGenerator {
 
     createAISpan() {
         const span = document.createElement('span');
-        span.className = 'ams bkAI ai-reply-span'; // ams for Gmail action, bkAI custom for AI
+        span.className = 'bkAI ai-reply-span'; // ams for Gmail action, bkAI custom for AI
         span.setAttribute('role', 'link');
         span.setAttribute('tabindex', '0');
         span.innerHTML = 'AI Reply';
@@ -696,19 +696,8 @@ function injectAIUpdateButton() {
     // Create the button
     const aiBtn = document.createElement('button');
     aiBtn.className = 'ai-update-btn';
-    aiBtn.textContent = 'AI Update';
+    aiBtn.textContent = 'AI';
     aiBtn.style.marginLeft = '8px';
-    aiBtn.style.background = '#4b5563';
-    aiBtn.style.color = '#fff';
-    aiBtn.style.border = 'none';
-    aiBtn.style.borderRadius = '6px';
-    aiBtn.style.padding = '6px 14px';
-    aiBtn.style.fontSize = '13px';
-    aiBtn.style.cursor = 'pointer';
-    aiBtn.style.transition = 'background 0.18s';
-
-    aiBtn.addEventListener('mouseenter', () => aiBtn.style.background = '#1a202c');
-    aiBtn.addEventListener('mouseleave', () => aiBtn.style.background = '#4b5563');
 
     // Insert after More send options button if present, else after Send button
     let moreSendBtn = sendBtn.parentNode.querySelector('.T-I.hG.T-I-atl');

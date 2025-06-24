@@ -1,28 +1,30 @@
 /* AI Reply Button Styles */
-.ai-reply-btn {
+.ai-reply-btn, .ai-update-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 10px 16px;
     margin: 0 4px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 36px;
+    line-height: 36px;
 }
 
-.ai-reply-btn:hover {
+.ai-reply-btn:hover, .ai-update-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 
-.ai-reply-btn:active {
+.ai-reply-btn:active, .ai-update-btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -531,4 +533,17 @@
     border-radius: 4px;
     backdrop-filter: blur(4px);
     z-index: 1;
+}
+
+/* Remove all hover effects from Gmail's button containers */
+.btC:hover, .dC:hover, .bAK:hover, .aDh:hover, .aDj:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    transition: none !important;
+}
+
+.btC, .dC, .bAK, .aDh, .aDj {
+    transition: none !important;
 } 
